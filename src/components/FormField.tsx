@@ -1,12 +1,11 @@
 import { get } from "lodash";
+import { useFormContext } from "@/hooks/FormProvider";
 
 interface FormFieldProps {
   label: string;
   stepsReference: string;
   type: string;
   disabled?: boolean;
-  register: any;
-  errors: any;
 }
 
 const FormField: React.FC<FormFieldProps> = ({
@@ -14,9 +13,8 @@ const FormField: React.FC<FormFieldProps> = ({
   stepsReference,
   type,
   disabled = false,
-  register,
-  errors,
 }) => {
+  const { register, errors } = useFormContext();
   const errorMessage = get(errors, stepsReference);
   return (
     <div>
