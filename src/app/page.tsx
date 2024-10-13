@@ -1,805 +1,1150 @@
 "use client";
 
-import React from "react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 
-const page = () => {
+import { z } from "zod";
+import { facultyPersonalDetailsSchema } from "@/schemas/personal-details";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
+import FormProgress from "@/components/FormProgress";
+import FormNavigation from "@/components/FormNavigation";
+import FormField from "@/components/FormField";
+import { Step } from "@/types/form";
+
+type Inputs = z.infer<typeof facultyPersonalDetailsSchema>;
+
+const steps: Step[] = [
+  {
+    id: "Step 1",
+    name: "Personal Information",
+    fields: [
+      "personalSchema.qualification",
+      "personalSchema.title",
+      "personalSchema.prefix",
+      "personalSchema.firstName",
+      "personalSchema.lastName",
+      "personalSchema.emailId",
+      "personalSchema.contactNo",
+      "personalSchema.alternateContactNo",
+      "personalSchema.emergencyContactNo",
+      "personalSchema.aadhar",
+      "personalSchema.pan",
+      "personalSchema.dob",
+      "personalSchema.gender",
+      "personalSchema.nationality",
+    ],
+  },
+  {
+    id: "Step 2",
+    name: "Address",
+    fields: [
+      "personalSchema.firstAddressLine2",
+      "personalSchema.firstAddressLine1",
+      "personalSchema.firstAddressLine3",
+      "personalSchema.correspondenceAddressLine1",
+      "personalSchema.correspondenceAddressLine2",
+      "personalSchema.correspondenceAddressLine3",
+    ],
+  },
+  {
+    id: "Step 3",
+    name: "Other Details",
+    fields: [
+      "personalSchema.religion",
+      "personalSchema.caste",
+      "personalSchema.category",
+      "personalSchema.motherTongue",
+      "personalSchema.speciallyChanged",
+      "personalSchema.speciallyChangedRemarks",
+      "personalSchema.languagesToSpeak",
+      "personalSchema.languagesToRead",
+      "personalSchema.languagesToWrite",
+    ],
+  },
+  {
+    id: "Step 4",
+    name: "Account Details",
+    fields: [
+      "financialSchema.bankName",
+      "financialSchema.accountNo",
+      "financialSchema.accountName",
+      "financialSchema.typeOfAccount",
+      "financialSchema.branch",
+      "financialSchema.ifscCode",
+      "financialSchema.pfNumber",
+      "financialSchema.uanNumber",
+      "financialSchema.pensionNumber",
+    ],
+  },
+  {
+    id: "Step 5",
+    name: "Education Details",
+    fields: ["educationSchema"],
+  },
+  {
+    id: "Step 6",
+    name: "Dependents",
+    fields: [
+      "dependentsSchema.motherName",
+      "dependentsSchema.fatherName",
+      "dependentsSchema.spouseName",
+      "dependentsSchema.children",
+    ],
+  },
+  {
+    id: "Step 7",
+    name: "Complete",
+    fields: [],
+  },
+];
+
+const languagesOptions = [
+  "English",
+  "Hindi",
+  "Kannada",
+  "Malayalam",
+  "Tamil",
+  "Telugu",
+  "Marathi",
+  "Gujarati",
+];
+
+export default function Form() {
+  const [previousStep, setPreviousStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const delta = currentStep - previousStep;
+
   const {
+    control,
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    watch,
     reset,
-    getValues,
-  } = useForm();
-
-  const [sameAsAbove, setSameAsAbove] = useState(false);
-  const [address, setAddress] = useState({
-    line1: "",
-    line2: "",
-    pin: "",
+    trigger,
+    setValue,
+    formState: { errors },
+  } = useForm<Inputs>({
+    resolver: zodResolver(facultyPersonalDetailsSchema),
   });
-  const [DOB, setDOB] = useState(new Date().toISOString().split("T")[0]);
 
-  const handleCheckboxChange = () => {
-    setSameAsAbove(!sameAsAbove);
+  const [isSameAddress, setIsSameAddress] = useState(false);
+
+  const firstAddressLine1 = watch("personalSchema.firstAddressLine1");
+  const firstAddressLine2 = watch("personalSchema.firstAddressLine2");
+  const firstAddressLine3 = watch("personalSchema.firstAddressLine3");
+
+  const handleCheckboxChange = (e: any) => {
+    setIsSameAddress(e.target.checked);
+
+    if (!e.target.checked) {
+      // Clear correspondence address fields when unchecked
+      setValue("personalSchema.correspondenceAddressLine1", "");
+      setValue("personalSchema.correspondenceAddressLine2", "");
+      setValue("personalSchema.correspondenceAddressLine3", "");
+    }
   };
 
-  const handleAddressChange = (e: any) => {
-    const { name, value } = e.target;
-    setAddress({ ...address, [name]: value });
+  // Sync correspondence address fields if checkbox is checked
+  useEffect(() => {
+    if (isSameAddress) {
+      setValue("personalSchema.correspondenceAddressLine1", firstAddressLine1);
+      setValue("personalSchema.correspondenceAddressLine2", firstAddressLine2);
+      setValue("personalSchema.correspondenceAddressLine3", firstAddressLine3);
+    }
+  }, [isSameAddress, firstAddressLine1, firstAddressLine2, firstAddressLine3]);
+
+  // Initialize useFieldArray for children
+  const {
+    fields: childFields,
+    append: appendChild,
+    remove: removeChild,
+  } = useFieldArray({
+    control,
+    name: "dependentsSchema.children",
+  });
+
+  // Initialize useFieldArray for education details
+  const {
+    fields: educationFields,
+    append: appendEducation,
+    remove: removeEducation,
+  } = useFieldArray({
+    control,
+    name: "educationSchema",
+  });
+
+  const processForm: SubmitHandler<Inputs> = async (data) => {
+    console.log(data);
+    reset();
+  };
+
+  type FieldName = keyof Inputs;
+
+  const nextButtonFunction = async () => {
+    const fields = steps[currentStep].fields;
+
+    const output = await trigger(fields as FieldName[], { shouldFocus: true });
+
+    if (!output) return;
+
+    if (currentStep < steps.length - 1) {
+      if (currentStep === steps.length - 2) {
+        const allFieldsValid = await trigger();
+        console.log("Submitting entire form");
+        if (allFieldsValid) {
+          console.log("Validation Successfull with all input data");
+          await handleSubmit(processForm)();
+        } else {
+          console.error(
+            "Validation Error with all input data with entire schema"
+          );
+        }
+      }
+      setPreviousStep(currentStep);
+      setCurrentStep((step) => step + 1);
+    }
+  };
+
+  const prevButtonFunction = () => {
+    if (currentStep > 0) {
+      setPreviousStep(currentStep);
+      setCurrentStep((step) => step - 1);
+    }
   };
 
   return (
-    <div className="">
-      <form action="">
-        <div className="p-6 max-w-4xl mx-auto bg-white border-2 shadow-md rounded-md my-10">
-          <div className="grid grid-cols-2 gap-6">
-            {/* Name Prefix */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="prefix"
-              >
-                Name Prefix
-              </label>
-              <select
-                name="prefix"
-                className="block p-2 border border-gray-300 rounded-md w-20"
-              >
-                <option value="Mr.">Mr.</option>
-                <option value="Mrs.">Mrs.</option>
-                <option value="Dr.">Dr.</option>
-                <option value="Prof.">Prof.</option>
-              </select>
-            </div>
+    <section className=" flex flex-col justify-between p-24">
+      <FormProgress steps={steps} currentStep={currentStep} />
 
-            {/* First Name */}
-            <div>
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="first-name"
-              >
-                First Name
-              </label>
-              <input
+      <form onSubmit={handleSubmit(processForm)} className="mt-12 py-12">
+        {currentStep === 0 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Personal Information
+            </h2>
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <FormField
+                label="Qualification"
+                stepsReference="personalSchema.qualification"
                 type="text"
-                id="first-name"
-                name="first-name"
-                pattern="^[A-Za-z][A-Za-z ]*$"
-                required
-                title="No numbers or special characters allowed."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="First Name"
+                register={register}
+                errors={errors}
               />
-            </div>
 
-            {/* Last Name */}
-            <div>
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="last-name"
-              >
-                Last Name
-              </label>
-              <input
+              <FormField
+                label="Title"
+                stepsReference="personalSchema.title"
                 type="text"
-                id="last-name"
-                name="last-name"
-                pattern="^[A-Za-z][A-Za-z ]*$"
-                required
-                title="No numbers or special characters allowed."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Last Name"
+                register={register}
+                errors={errors}
               />
-            </div>
 
-            {/* Email */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="email"
-              >
-                Mail ID
-              </label>
-              <input
+              <div className="grid grid-cols-1 sm:grid-cols-6 gap-6">
+                <div className="col-span-1">
+                  <label
+                    htmlFor="prefix"
+                    className="block  text-sm font-medium text-gray-700"
+                  >
+                    Prefix
+                  </label>
+                  <select
+                    id="prefix"
+                    {...register("personalSchema.prefix")}
+                    className="mt-1 w-full block p-1 py-2 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option>Mr</option>
+                    <option>Mrs</option>
+                    <option>Ms</option>
+                    <option>Dr</option>
+                  </select>
+                </div>
+
+                <div className="col-span-5">
+                  <label
+                    htmlFor="firstName"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    id="firstName"
+                    {...register("personalSchema.firstName")}
+                    className="mt-1 block w-full p-1 py-1.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  />
+                  {errors.personalSchema?.firstName && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.personalSchema.firstName.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <FormField
+                label="Last Name"
+                stepsReference="personalSchema.lastName"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Email ID"
+                stepsReference="personalSchema.emailId"
                 type="email"
-                id="email"
-                name="email"
-                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-                required
-                title="Enter a valid email address."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Email"
+                register={register}
+                errors={errors}
               />
-            </div>
 
-            {/* Phone */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="phone"
-              >
-                Contact No.
-              </label>
-              <input
+              <FormField
+                label="Contact Number"
+                stepsReference="personalSchema.contactNo"
+                type="tel"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Alternate Contact Number"
+                stepsReference="personalSchema.alternateContactNo"
+                type="tel"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Emergency Contact Number"
+                stepsReference="personalSchema.emergencyContactNo"
+                type="tel"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Aadhar Number"
+                stepsReference="personalSchema.aadhar"
                 type="text"
-                id="phone"
-                name="phone"
-                pattern="[0-9]{10}"
-                required
-                title="Enter a valid 10 digit phone number."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Phone"
+                register={register}
+                errors={errors}
               />
-            </div>
 
-            {/* Aadhar */}
-            <div>
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="aadhar"
-              >
-                Aadhar
-              </label>
-              <input
+              <FormField
+                label="PAN Number"
+                stepsReference="personalSchema.pan"
                 type="text"
-                id="aadhar"
-                name="aadhar"
-                pattern="[0-9]{12}"
-                required
-                title="Enter a valid 12 digit Aadhar number."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Aadhar"
+                register={register}
+                errors={errors}
               />
-            </div>
 
-            {/* PAN */}
-            <div>
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="pan"
-              >
-                PAN
-              </label>
-              <input
-                type="text"
-                id="pan"
-                name="pan"
-                pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
-                required
-                title="Enter a valid PAN number."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="PAN"
-              />
-            </div>
-
-            {/* Department */}
-            <div>
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="department"
-              >
-                Department
-              </label>
-              <select
-                name="department"
-                className="block p-2 border border-gray-300 rounded-md w-full"
-              >
-                <option value="Civil Engineering">Civil Engineering</option>
-                <option value="Mechanical Engineering">
-                  Mechanical Engineering
-                </option>
-                <option value="Electrical and Electronics Engineering">
-                  Electrical and Electronics Engineering
-                </option>
-                <option value="Electronics and Communication Engineering">
-                  Electronics and Communication Engineering
-                </option>
-                <option value="Industrial Engineering and Management">
-                  Industrial Engineering and Management
-                </option>
-                <option value="Electronics and Instrumentation Engineering">
-                  Electronics and Instrumentation Engineering
-                </option>
-                <option value="Computer Science and Engineering">
-                  Computer Science and Engineering
-                </option>
-                <option value="Electronics and Telecommunication Engineering">
-                  Electronics and Telecommunication Engineering
-                </option>
-                <option value="Information Science and Engineering">
-                  Information Science and Engineering
-                </option>
-                <option value="Medical Electronics Engineering">
-                  Medical Electronics Engineering
-                </option>
-                <option value="Aeronautical Engineering">
-                  Aeronautical Engineering
-                </option>
-                <option value="Computer Applications (MCA)">
-                  Computer Applications (MCA)
-                </option>
-                <option value="Business Administration (MBA)">
-                  Business Administration (MBA)
-                </option>
-                <option value="Artificial Intelligence and Machine Learning">
-                  Artificial Intelligence and Machine Learning
-                </option>
-                <option value="Computer Science and Business Studies">
-                  Computer Science and Business Studies
-                </option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Physics">Physics</option>
-                <option value="Chemistry">Chemistry</option>
-                <option value="Humanities and Social Science">
-                  Humanities and Social Science
-                </option>
-              </select>
-            </div>
-
-            {/* Employee ID */}
-            <div>
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="employee-id"
-              >
-                Employee ID
-              </label>
-              <input
-                type="text"
-                id="employee-id"
-                name="employee-id"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Employee ID"
-              />
-            </div>
-
-            {/* AICTE Faculty ID */}
-            <div>
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="aicte-id"
-              >
-                AICTE Faculty ID
-              </label>
-              <input
-                type="text"
-                id="aicte-id"
-                name="aicte-id"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="AICTE Faculty ID"
-              />
-            </div>
-
-            {/* Vidwan ID */}
-            <div>
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="vidwan-id"
-              >
-                Vidwan ID
-              </label>
-              <input
-                type="text"
-                id="vidwan-id"
-                name="vidwan-id"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Vidwan ID"
-              />
-            </div>
-          </div>
-        </div>
-        <div className="p-6 max-w-4xl mx-auto bg-white border-2 shadow-md rounded-md my-10">
-          <div className="grid grid-cols-3 gap-6">
-            {/* DOB */}
-            <div className="col-span-1">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="dob"
-              >
-                Date of Birth (DOB)
-              </label>
-              <input
+              <FormField
+                label="Date of Birth"
+                stepsReference="personalSchema.dob"
                 type="date"
-                id="dob"
-                value={DOB}
-                onChange={(e) => setDOB(e.target.value)}
-                className="block w-full p-2 border border-gray-300 rounded-md"
+                register={register}
+                errors={errors}
               />
-            </div>
 
-            {/* Age */}
-            <div className="col-span-1">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="middle-name"
-              >
-                Age
-              </label>
-              <input
-                type="number"
-                id="age"
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Age"
-                disabled={true}
-                value={new Date().getFullYear() - new Date(DOB).getFullYear()}
-              />
-            </div>
+              <div></div>
 
-            {/* Gender */}
-            <div className="col-span-1">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="prefix"
-              >
-                Gender
-              </label>
-              <select
-                name="prefix"
-                className="block p-2 border border-gray-300 rounded-md w-full"
-              >
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-            </div>
+              <div>
+                <label
+                  htmlFor="gender"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Gender
+                </label>
+                <select
+                  id="gender"
+                  {...register("personalSchema.gender")}
+                  className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                >
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Other</option>
+                </select>
+                {errors.personalSchema?.gender && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.personalSchema.gender.message}
+                  </p>
+                )}
+              </div>
 
-            {/* State */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="prefix"
-              >
-                State
-              </label>
-              <select
-                name="prefix"
-                className="block p-2 border border-gray-300 rounded-md"
-              >
-                <option value="Karnataka">Karnataka</option>
-                <option value="Tamil Nadu">Tamil Nadu</option>
-                <option value="Tamil Nadu">Kerala</option>
-              </select>
-            </div>
-
-            {/* Address Line 1 */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="address-line1"
-              >
-                Address Line 1
-              </label>
-              <input
+              <FormField
+                label="Nationality"
+                stepsReference="personalSchema.nationality"
                 type="text"
-                id="address-line1"
-                name="line1"
-                required
-                value={address.line1}
-                onChange={handleAddressChange}
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Address Line 1"
+                register={register}
+                errors={errors}
               />
             </div>
+          </motion.div>
+        )}
 
-            {/* Address Line 2 */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="address-line2"
-              >
-                Address Line 2
-              </label>
-              <input
+        {currentStep === 1 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Address
+            </h2>
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <FormField
+                label="First Address Line 1"
+                stepsReference="personalSchema.firstAddressLine1"
                 type="text"
-                id="address-line2"
-                name="line2"
-                required
-                value={address.line2}
-                onChange={handleAddressChange}
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Address Line 2"
+                register={register}
+                errors={errors}
               />
-            </div>
 
-            {/* PIN */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="pin"
-              >
-                PIN
-              </label>
-              <input
+              <FormField
+                label="First Address Line 2"
+                stepsReference="personalSchema.firstAddressLine2"
                 type="text"
-                id="pin"
-                name="pin"
-                required
-                value={address.pin}
-                onChange={handleAddressChange}
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="PIN"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="First Address Line 3"
+                stepsReference="personalSchema.firstAddressLine3"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              {/* Checkbox for Same Address */}
+              <div className="sm:col-span-2">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={isSameAddress}
+                    onChange={handleCheckboxChange}
+                    className="mr-2"
+                  />
+                  Same as First Address
+                </label>
+              </div>
+
+              <FormField
+                label="Correspondence Address Line 1"
+                stepsReference="personalSchema.correspondenceAddressLine1"
+                type="text"
+                disabled={isSameAddress}
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Correspondence Address Line 2"
+                stepsReference="personalSchema.correspondenceAddressLine2"
+                type="text"
+                disabled={isSameAddress}
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Correspondence Address Line 3"
+                stepsReference="personalSchema.correspondenceAddressLine3"
+                type="text"
+                disabled={isSameAddress}
+                register={register}
+                errors={errors}
               />
             </div>
+          </motion.div>
+        )}
 
-            {/* Same as Above Checkbox */}
-            <div className="col-span-3">
-              <label className="block text-gray-700 text-sm font-bold mb-2">
+        {currentStep === 2 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Other Details
+            </h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {/* Religion Dropdown */}
+              <div>
+                <label
+                  htmlFor="religion"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Religion
+                </label>
+                <select
+                  id="religion"
+                  {...register("personalSchema.religion")}
+                  className="mt-1 block w-full p-2 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                >
+                  <option value="">Select Religion</option>
+                  <option value="Hindu">Hindu</option>
+                  <option value="Muslim">Muslim</option>
+                  <option value="Christian">Christian</option>
+                  <option value="Sikh">Sikh</option>
+                  <option value="Other">Other</option>
+                </select>
+                {errors.personalSchema?.religion && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.personalSchema.religion.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Caste Dropdown */}
+              <div>
+                <label
+                  htmlFor="caste"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Caste
+                </label>
+                <select
+                  id="caste"
+                  {...register("personalSchema.caste")}
+                  className="mt-1 block w-full p-2 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                >
+                  <option value="">Select Caste</option>
+                  <option value="Brahmins">Brahmins</option>
+                  <option value="Thakur">Thakur</option>
+                  <option value="Vaishya">Vaishya</option>
+                  <option value="Tyagi">Tyagi</option>
+                  <option value="Bhumihar">Bhumihar</option>
+                  <option value="Muslims">Muslims</option>
+                  <option value="Christians">Christians</option>
+                  <option value="Rajput">Rajput</option>
+                  <option value="Kayastha">Kayastha</option>
+                  <option value="Pathans">Pathans</option>
+                  <option value="Muslim Mughals">Muslim Mughals</option>
+                  <option value="Muslim Shaikh">Muslim Shaikh</option>
+                  <option value="Muslim Sayyad">Muslim Sayyad</option>
+                  <option value="Jat Sikh">Jat Sikh</option>
+                  <option value="Bania">Bania</option>
+                  <option value="Punjabi Khatri">Punjabi Khatri</option>
+                  <option value="Punjabi Arora">Punjabi Arora</option>
+                  <option value="Punjabi Sood">Punjabi Sood</option>
+                  <option value="Baidya">Baidya</option>
+                  <option value="Patidar">Patidar</option>
+                  <option value="Patel">Patel</option>
+                  <option value="Kshatriya">Kshatriya</option>
+                  <option value="Reddy">Reddy</option>
+                  <option value="Kamma">Kamma</option>
+                  <option value="Kapu">Kapu</option>
+                  <option value="Gomati Baniya">Gomati Baniya</option>
+                  <option value="Velamma">Velamma</option>
+                  <option value="Kshatriya Raju">Kshatriya Raju</option>
+                  <option value="Iyengar">Iyengar</option>
+                  <option value="Iyer">Iyer</option>
+                  <option value="Vellalars">Vellalars</option>
+                  <option value="Nair">Nair</option>
+                  <option value="Naidu">Naidu</option>
+                  <option value="Mukkulathor">Mukkulathor</option>
+                  <option value="Sengunthar">Sengunthar</option>
+                  <option value="Parkavakulam">Parkavakulam</option>
+                  <option value="Nagarathar Baniya">Nagarathar Baniya</option>
+                  <option value="Komati">Komati</option>
+                  <option value="Vokkaligas">Vokkaligas</option>
+                  <option value="Lingayats">Lingayats</option>
+                  <option value="Bunts">Bunts</option>
+                </select>
+                {errors.personalSchema?.caste && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.personalSchema.caste.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Category Dropdown */}
+              <div>
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Category
+                </label>
+                <select
+                  id="category"
+                  {...register("personalSchema.category")}
+                  className="mt-1 block w-full p-2 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                >
+                  <option value="">Select Category</option>
+                  <option value="General">General</option>
+                  <option value="OBC">OBC</option>
+                  <option value="SC">SC</option>
+                  <option value="ST">ST</option>
+                </select>
+                {errors.personalSchema?.category && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.personalSchema.category.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Mother Tongue Dropdown */}
+              <div>
+                <label
+                  htmlFor="motherTongue"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Mother Tongue
+                </label>
+                <select
+                  id="motherTongue"
+                  {...register("personalSchema.motherTongue")}
+                  className="mt-1 block w-full p-2 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                >
+                  <option value="">Select Mother Tongue</option>
+                  <option value="Kannada">Kannada</option>
+                  <option value="Malayalam">Malayalam</option>
+                  <option value="Hindi">Hindi</option>
+                  <option value="English">English</option>
+                  <option value="Tamil">Tamil</option>
+                  <option value="Telugu">Telugu</option>
+                  <option value="Other">Other</option>
+                </select>
+                {errors.personalSchema?.motherTongue && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.personalSchema.motherTongue.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Specially Challenged Checkbox */}
+              <div>
+                <label
+                  htmlFor="speciallyChanged"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Specially Challenged
+                </label>
                 <input
                   type="checkbox"
-                  checked={sameAsAbove}
-                  onChange={handleCheckboxChange}
-                  className="mr-2"
+                  id="speciallyChanged"
+                  {...register("personalSchema.speciallyChanged")}
+                  className="mt-1"
                 />
-                Address for Correspondence Same as Above
-              </label>
-            </div>
-
-            {/* Address for Correspondence */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="corr-line1"
-              >
-                Address for Correspondence Line 1
-              </label>
-              <input
-                type="text"
-                id="corr-line1"
-                name="corr-line1"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                value={sameAsAbove ? address.line1 : ""}
-                disabled={sameAsAbove}
-                placeholder="Correspondence Address Line 1"
-              />
-            </div>
-
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="corr-line2"
-              >
-                Address for Correspondence Line 2
-              </label>
-              <input
-                type="text"
-                id="corr-line2"
-                name="corr-line2"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                value={sameAsAbove ? address.line2 : ""}
-                disabled={sameAsAbove}
-                placeholder="Correspondence Address Line 2"
-              />
-            </div>
-
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="corr-pin"
-              >
-                Correspondence PIN
-              </label>
-              <input
-                type="text"
-                id="corr-pin"
-                name="corr-pin"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                value={sameAsAbove ? address.pin : ""}
-                disabled={sameAsAbove}
-                placeholder="Correspondence PIN"
-              />
-            </div>
-
-            {/* Religion */}
-            <div className="col-span-1">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="prefix"
-              >
-                Religion
-              </label>
-              <select
-                name="prefix"
-                className="block p-2 border border-gray-300 rounded-md w-full"
-              >
-                <option value="Hinduism">Hinduism</option>
-                <option value="Christianity">Christianity</option>
-                <option value="Islam">Islam</option>
-                <option value="Buddhism">Buddhism</option>
-                <option value="Baha'i">Baha'i</option>
-                <option value="Confucianism">Confucianism</option>
-                <option value="Jainism">Jainism</option>
-                <option value="Judaism">Judaism</option>
-                <option value="Shinto">Shinto</option>
-                <option value="Sikhism">Sikhism</option>
-                <option value="Taoism">Taoism</option>
-                <option value="Zoroastrianism">Zoroastrianism</option>
-              </select>
-            </div>
-
-            {/* Caste */}
-            <div className="col-span-1">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="prefix"
-              >
-                Community
-              </label>
-              <select
-                name="community"
-                className="block p-2 border border-gray-300 rounded-md w-full"
-              >
-                <option value="Brahmins">Brahmins</option>
-                <option value="Thakur">Thakur</option>
-                <option value="Vaishya">Vaishya</option>
-                <option value="Tyagi">Tyagi</option>
-                <option value="Bhumihar">Bhumihar</option>
-                <option value="Muslims">Muslims</option>
-                <option value="Christians">Christians</option>
-                <option value="Rajput">Rajput</option>
-                <option value="Kayastha">Kayastha</option>
-                <option value="Pathans">Pathans</option>
-                <option value="Muslim Mughals">Muslim Mughals</option>
-                <option value="Muslim Shaikh">Muslim Shaikh</option>
-                <option value="Muslim Sayyad">Muslim Sayyad</option>
-                <option value="Jat Sikh">Jat Sikh</option>
-                <option value="Bania">Bania</option>
-                <option value="Punjabi Khatri">Punjabi Khatri</option>
-                <option value="Punjabi Arora">Punjabi Arora</option>
-                <option value="Punjabi Sood">Punjabi Sood</option>
-                <option value="Baidya">Baidya</option>
-                <option value="Patidar">Patidar</option>
-                <option value="Patel">Patel</option>
-                <option value="Kshatriya">Kshatriya</option>
-                <option value="Reddy">Reddy</option>
-                <option value="Kamma">Kamma</option>
-                <option value="Kapu">Kapu</option>
-                <option value="Gomati Baniya">Gomati Baniya</option>
-                <option value="Velamma">Velamma</option>
-                <option value="Kshatriya Raju">Kshatriya Raju</option>
-                <option value="Iyengar">Iyengar</option>
-                <option value="Iyer">Iyer</option>
-                <option value="Vellalars">Vellalars</option>
-                <option value="Nair">Nair</option>
-                <option value="Naidu">Naidu</option>
-                <option value="Mukkulathor">Mukkulathor</option>
-                <option value="Sengunthar">Sengunthar</option>
-                <option value="Parkavakulam">Parkavakulam</option>
-                <option value="Nagarathar Baniya">Nagarathar Baniya</option>
-                <option value="Komati">Komati</option>
-                <option value="Vokkaligas">Vokkaligas</option>
-                <option value="Lingayats">Lingayats</option>
-                <option value="Bunts">Bunts</option>
-              </select>
-            </div>
-
-            {/* Category */}
-            <div className="col-span-1">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="prefix"
-              >
-                Category
-              </label>
-              <select
-                name="prefix"
-                className="block p-2 border border-gray-300 rounded-md w-full"
-              >
-                <option value="GM">GM</option>
-                <option value="SC">SC</option>
-                <option value="ST">SC</option>
-                <option value="OBC">OBC</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div className="p-6 max-w-4xl mx-auto bg-white border-2 shadow-md rounded-md my-10">
-          <div className="grid grid-cols-2 gap-6">
-            {/* Name of Spouse */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="spouse-name"
-              >
-                Name of Spouse
-              </label>
-              <input
-                type="text"
-                id="spouse-name"
-                name="spouse-name"
-                pattern="[A-Za-z]{1,}"
-                required
-                title="No numbers or special characters allowed."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Spouse Name"
-              />
-            </div>
-            {/* No. of Dependents */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="dependents"
-              >
-                No. of Dependents
-              </label>
-              <input
-                type="number"
-                id="dependents"
-                name="dependents"
-                min={0}
-                max={10}
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Number of Dependents"
-              />
-            </div>
-            {/* Mother's Name */}
-            <div className="col-span-1">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="mother-name"
-              >
-                Mother's Name
-              </label>
-              <input
-                type="text"
-                id="mother-name"
-                pattern="[A-Za-z]{1,}"
-                required
-                title="No numbers or special characters allowed."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Mother's Name"
-              />
-            </div>
-            {/* Father's Name */}
-            <div className="col-span-1">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="mother-name"
-              >
-                Father's Name
-              </label>
-              <input
-                type="text"
-                id="father-name"
-                name="father-name"
-                pattern="[A-Za-z]{1,}"
-                required
-                title="No numbers or special characters allowed."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Mother's Name"
-              />
-            </div>
-            {/* Mother Tongue */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="mother-name"
-              >
-                Mother Tongue
-              </label>
-              <select
-                name="monther-tongue"
-                className="block p-2 border border-gray-300 rounded-md w-full"
-              >
-                <option value="Kannada">Kannada</option>
-                <option value="English">English</option>
-                <option value="Tamil">Tamil</option>
-                <option value="Hindi">Hindi</option>
-                <option value="Malyalam">Malyalam</option>
-              </select>
-            </div>
-            {/* Blood Group */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="blood-group"
-              >
-                Blood Group
-              </label>
-              <select
-                name="prefix"
-                className="block p-2 border border-gray-300 rounded-md w-full"
-              >
-                <option value="A+">A+</option>
-                <option value="B+">B+</option>
-                <option value="O+">O+</option>
-                <option value="AB+">AB+</option>
-                <option value="A-">A-</option>
-                <option value="B-">B-</option>
-                <option value="O-">O-</option>
-                <option value="AB-">AB-</option>
-              </select>
-            </div>
-            {/* Specially Challenged */}
-            <div className="col-span-2">
-              <label className="block text-gray-700 text-sm font-bold mb-2">
+                {errors.personalSchema?.speciallyChanged && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.personalSchema.speciallyChanged.message}
+                  </p>
+                )}
+                <label
+                  htmlFor="speciallyChangedRemarks"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Specially Challenged Remarks
+                </label>
                 <input
-                  type="checkbox"
-                  className="mr-2"
-                  id="specially-challenged"
+                  type="text"
+                  id="speciallyChangedRemarks"
+                  {...register("personalSchema.speciallyChangedRemarks")}
+                  className="mt-1 block w-full p-1 py-1.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
                 />
-                Specially Challenged
-              </label>
-            </div>
+                {errors.personalSchema?.speciallyChangedRemarks && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.personalSchema.speciallyChangedRemarks.message}
+                  </p>
+                )}
+              </div>
 
-            {/* Mode of Transport */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="mode-of-transport"
-              >
-                Mode of Transport
-              </label>
-              <select
-                name="prefix"
-                className="block p-2 border border-gray-300 rounded-md w-full"
-              >
-                <option value="Two Wheeler">Two Wheeler</option>
-                <option value="Four Wheeler">Four Wheeler</option>
-                <option value="Public Transport">Public Transport</option>
-              </select>
-            </div>
+              <div></div>
 
-            {/* Bank Account Number */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="bank-account"
-              >
-                Bank Account Number
-              </label>
-              <input
+              {/* Languages to Speak (Multiselect Checkboxes) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Languages to Speak
+                </label>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  {languagesOptions.map((language) => (
+                    <div key={language} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`languagesToSpeak_${language}`}
+                        value={language}
+                        {...register("personalSchema.languagesToSpeak")}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor={`languagesToSpeak_${language}`}
+                        className="ml-2 block text-sm text-gray-900"
+                      >
+                        {language}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                {errors.personalSchema?.languagesToSpeak && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.personalSchema.languagesToSpeak.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Languages to Read (Multiselect Checkboxes) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Languages to Read
+                </label>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  {languagesOptions.map((language) => (
+                    <div key={language} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`languagesToRead_${language}`}
+                        value={language}
+                        {...register("personalSchema.languagesToRead")}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor={`languagesToRead_${language}`}
+                        className="ml-2 block text-sm text-gray-900"
+                      >
+                        {language}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                {errors.personalSchema?.languagesToRead && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.personalSchema.languagesToRead.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Languages to Write (Multiselect Checkboxes) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Languages to Write
+                </label>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  {languagesOptions.map((language) => (
+                    <div key={language} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`languagesToWrite_${language}`}
+                        value={language}
+                        {...register("personalSchema.languagesToWrite")}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor={`languagesToWrite_${language}`}
+                        className="ml-2 block text-sm text-gray-900"
+                      >
+                        {language}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                {errors.personalSchema?.languagesToWrite && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.personalSchema.languagesToWrite.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {currentStep === 3 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Financial Details
+            </h2>
+
+            {/* Financial Details Form Fields */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <FormField
+                label="Bank Name"
+                stepsReference="financialSchema.bankName"
                 type="text"
-                id="bank-account"
-                name="bank-account"
-                pattern="[0-9]{9,18}"
-                required
-                title="Enter a valid bank account number."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Bank Account Number"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Account Number"
+                stepsReference="financialSchema.accountNo"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Account Name"
+                stepsReference="financialSchema.accountName"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              <div>
+                <label
+                  htmlFor="typeOfAccount"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Type of Account
+                </label>
+                <select
+                  id="typeOfAccount"
+                  {...register("financialSchema.typeOfAccount")}
+                  className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                >
+                  <option>Savings</option>
+                  <option>Current</option>
+                </select>
+                {errors.financialSchema?.typeOfAccount && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.financialSchema.typeOfAccount.message}
+                  </p>
+                )}
+              </div>
+
+              <FormField
+                label="Branch"
+                stepsReference="financialSchema.branch"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="IFSC Code"
+                stepsReference="financialSchema.ifscCode"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="PF Number"
+                stepsReference="financialSchema.pfNumber"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="UAN Number"
+                stepsReference="financialSchema.uanNumber"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Pension Number"
+                stepsReference="financialSchema.pensionNumber"
+                type="text"
+                register={register}
+                errors={errors}
               />
             </div>
+          </motion.div>
+        )}
 
-            {/* Emergency Contact No */}
-            <div className="col-span-2">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="emergency-contact"
+        {currentStep === 4 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Education Details
+            </h2>
+
+            {/* Education Details Form Fields */}
+            {educationFields.map((item, index) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2"
               >
-                Emergency Contact No.
-              </label>
-              <input
-                type="text"
-                id="emergency-contact"
-                name="emergency-contact"
-                pattern="[0-9]{10}"
-                required
-                title="Enter a valid 10 digit phone number."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Emergency Contact No."
-              />
-            </div>
-          </div>
-        </div>
+                <FormField
+                  label="Program (Class)"
+                  stepsReference={`educationSchema.${index}.class`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
 
-        <div className="flex flex-row my-10 justify-center gap-2">
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Cancel
-          </button>
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Submit
-          </button>
-        </div>
+                <FormField
+                  label="USN"
+                  stepsReference={`educationSchema.${index}.usn`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Institution"
+                  stepsReference={`educationSchema.${index}.institution`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Specialization"
+                  stepsReference={`educationSchema.${index}.specialization`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Medium of Instruction"
+                  stepsReference={`educationSchema.${index}.mediumOfInstruction`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                {/* Direct Correspondence Dropdown */}
+                <div>
+                  <label
+                    htmlFor="directCorr"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Direct/Correspondence
+                  </label>
+                  <select
+                    id="directCorr"
+                    {...register(`educationSchema.${index}.directCorr`)}
+                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option value="Direct">Direct</option>
+                    <option value="Correspondence">Correspondence</option>
+                  </select>
+                  {errors.educationSchema?.[index]?.directCorr && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.educationSchema[index].directCorr.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Pass Class Dropdown */}
+                <div>
+                  <label
+                    htmlFor="passClass"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Pass Class
+                  </label>
+                  <select
+                    id="passClass"
+                    {...register(`educationSchema.${index}.passClass`)}
+                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option value="Distinction">Distinction</option>
+                    <option value="First">First</option>
+                    <option value="Second">Second</option>
+                    <option value="Third">Third</option>
+                    <option value="Fail">Fail</option>
+                  </select>
+                  {errors.educationSchema?.[index]?.passClass && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.educationSchema[index].passClass.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Remove Education Button */}
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeEducation(index)}
+                    className="text-red-600 text-sm"
+                  >
+                    Remove Education
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Add Education Button */}
+            <button
+              type="button"
+              onClick={() =>
+                appendEducation({
+                  class: "",
+                  usn: "",
+                  institution: "",
+                  specialization: "",
+                  mediumOfInstruction: "",
+                  directCorr: "Direct",
+                  passClass: "First",
+                })
+              }
+              className="text-indigo-600 text-sm"
+            >
+              + Add Education
+            </button>
+          </motion.div>
+        )}
+
+        {currentStep === 5 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Dependents
+            </h2>
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <FormField
+                label="Mother Name"
+                stepsReference="dependentsSchema.motherName"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Father Name"
+                stepsReference="dependentsSchema.fatherName"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              <FormField
+                label="Spouse Name"
+                stepsReference="dependentsSchema.spouseName"
+                type="text"
+                register={register}
+                errors={errors}
+              />
+
+              {/* Children */}
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 py-2">
+                  Children
+                </label>
+
+                {childFields.map((child, index) => (
+                  <div
+                    key={child.id}
+                    className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4"
+                  >
+                    {/* Child Name */}
+                    <FormField
+                      label="Name"
+                      stepsReference={`dependentsSchema.children[${index}].name`}
+                      type="text"
+                      register={register}
+                      errors={errors}
+                    />
+
+                    {/* Child Gender */}
+                    <div>
+                      <label
+                        htmlFor={`children[${index}].gender`}
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Gender
+                      </label>
+                      <select
+                        id={`children[${index}].gender`}
+                        {...register(
+                          `dependentsSchema.children.${index}.gender`
+                        )}
+                        className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                      >
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Prefer not to say">
+                          Prefer not to say
+                        </option>
+                      </select>
+                      {errors.dependentsSchema?.children?.[index]?.gender && (
+                        <p className="mt-2 text-sm text-red-600">
+                          {
+                            errors.dependentsSchema.children[index].gender
+                              .message
+                          }
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Child Date of Birth */}
+                    <div>
+                      <label
+                        htmlFor={`children[${index}].dob`}
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Date of Birth
+                      </label>
+                      <input
+                        type="date"
+                        id={`children[${index}].dob`}
+                        {...register(`dependentsSchema.children.${index}.dob`)}
+                        className="mt-1 block w-full p-1 py-1.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                      />
+                      {errors.dependentsSchema?.children?.[index]?.dob && (
+                        <p className="mt-2 text-sm text-red-600">
+                          {errors.dependentsSchema.children[index].dob.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Remove Child Button */}
+                    <div className="col-span-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => removeChild(index)}
+                        className="text-red-600 text-sm"
+                      >
+                        Remove Child
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Add Child Button */}
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      appendChild({
+                        name: "",
+                        gender: "Male",
+                        dob: "",
+                      })
+                    }
+                    className="text-indigo-600 text-sm"
+                  >
+                    + Add Child
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {currentStep === 6 && <div>Complete</div>}
       </form>
-    </div>
-  );
-};
 
-export default page;
+      <FormNavigation
+        prevButtonFunction={prevButtonFunction}
+        steps={steps}
+        currentStep={currentStep}
+        nextButtonFunction={nextButtonFunction}
+      />
+    </section>
+  );
+}

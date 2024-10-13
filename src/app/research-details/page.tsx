@@ -1,275 +1,1544 @@
-import React from "react";
+"use client";
 
-const page = () => {
+import { useState } from "react";
+import { motion } from "framer-motion";
+
+import { z } from "zod";
+import { facultyResearchDetailsSchema } from "@/schemas/research-details";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
+import { identity } from "lodash";
+import FormProgress from "@/components/FormProgress";
+import { Step } from "@/types/form";
+import FormField from "@/components/FormField";
+import FormNavigation from "@/components/FormNavigation";
+
+type Inputs = z.infer<typeof facultyResearchDetailsSchema>;
+
+const steps: Step[] = [
+  {
+    id: "Step 1",
+    name: "Faculty Research Details",
+    fields: [
+      "facultyResearchSchema.vtuFacultyId",
+      "facultyResearchSchema.aicteFacultyId",
+      "facultyResearchSchema.orcId",
+      "facultyResearchSchema.scopusId",
+      "facultyResearchSchema.publonsAndWebOfScienceId",
+    ],
+  },
+  {
+    id: "Step 2",
+    name: "National and International Journal",
+    fields: [
+      "nationalJournalDetailsSchema",
+      "internationalJournalDetailsSchema",
+    ],
+  },
+  {
+    id: "Step 3",
+    name: "National and International Conference",
+    fields: [
+      "nationalConferenceDetailsSchema",
+      "internationalConferenceDetailsSchema",
+    ],
+  },
+  {
+    id: "Step 4",
+    name: "Research and Consultancy",
+    fields: ["researchGrantsSchema", "consultancySchema"],
+  },
+  {
+    id: "Step 5",
+    name: "Patents Details",
+    fields: ["patentsSchema"],
+  },
+  {
+    id: "Step 6",
+    name: "Research Scholar Details",
+    fields: ["researchScholarDetailsSchema"],
+  },
+  { id: "Step 7", name: "Complete", fields: [] },
+];
+
+export default function Form() {
+  const [previousStep, setPreviousStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const delta = currentStep - previousStep;
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    trigger,
+    setValue,
+    formState: { errors },
+  } = useForm<Inputs>({
+    resolver: zodResolver(facultyResearchDetailsSchema),
+  });
+
+  const {
+    fields: nationalJournal,
+    append: appendNationalJournal,
+    remove: removeNationalJournal,
+  } = useFieldArray({ control, name: "nationalJournalDetailsSchema" });
+
+  const {
+    fields: internationalJournal,
+    append: appendInternationalJournal,
+    remove: removeInternationalJournal,
+  } = useFieldArray({ control, name: "internationalJournalDetailsSchema" });
+
+  const {
+    fields: nationalConference,
+    append: appendNationalConference,
+    remove: removeNationalConference,
+  } = useFieldArray({ control, name: "nationalConferenceDetailsSchema" });
+
+  const {
+    fields: internationalConference,
+    append: appendInternationalConference,
+    remove: removeInternationalConference,
+  } = useFieldArray({ control, name: "internationalConferenceDetailsSchema" });
+
+  const {
+    fields: researchGrants,
+    append: appendResearchGrants,
+    remove: removeResearchGrants,
+  } = useFieldArray({ control, name: "researchGrantsSchema" });
+
+  const {
+    fields: consultancy,
+    append: appendConsultancy,
+    remove: removeConsultancy,
+  } = useFieldArray({ control, name: "consultancySchema" });
+
+  const {
+    fields: patents,
+    append: appendPatents,
+    remove: removePatents,
+  } = useFieldArray({ control, name: "patentsSchema" });
+
+  const {
+    fields: researchScholar,
+    append: appendResearchScholar,
+    remove: removeResearchScholar,
+  } = useFieldArray({ control, name: "researchScholarDetailsSchema" });
+
+  const processForm: SubmitHandler<Inputs> = (data) => {
+    console.log(data);
+    reset();
+  };
+
+  type FieldName = keyof Inputs;
+
+  const nextButtonFunction = async () => {
+    const fields = steps[currentStep].fields;
+
+    const output = await trigger(fields as FieldName[], { shouldFocus: true });
+
+    if (!output) return;
+
+    if (currentStep < steps.length - 1) {
+      if (currentStep === steps.length - 2) {
+        const allFieldsValid = await trigger();
+        console.log("Submitting entire form");
+        if (allFieldsValid) {
+          console.log("Validation Successfull with all input data");
+          await handleSubmit(processForm)();
+        } else {
+          console.error(
+            "Validation Error with all input data with entire schema"
+          );
+        }
+      }
+      setPreviousStep(currentStep);
+      setCurrentStep((step) => step + 1);
+    }
+  };
+
+  const prevButtonFunction = () => {
+    if (currentStep > 0) {
+      setPreviousStep(currentStep);
+      setCurrentStep((step) => step - 1);
+    }
+  };
+
   return (
-    <div>
-      <form action="">
-        <div className="p-6 max-w-4xl mx-auto bg-white border-2 shadow-md rounded-md my-10">
-          <div className="grid grid-cols-3 gap-6">
-            {/* ORC ID */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="prefix"
-              >
-                ORCID
-              </label>
-              <input
-                type="text"
-                id="orc-id"
-                name="orc-id"
-                pattern="[0-9]{12}"
-                required
-                title="12 digit number"
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="ORCID"
-              />
-            </div>
+    <section className=" flex flex-col justify-between p-24">
+      <FormProgress steps={steps} currentStep={currentStep} />
 
-            {/* SCOPUS ID */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="first-name"
-              >
-                Scopus ID
-              </label>
-              <input
-                type="text"
-                id="scopus-id"
-                name="scopus-id"
-                pattern="[0-9]{11}"
-                required
-                title="12 digit number"
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Scopus ID"
-              />
-            </div>
+      {/* Form */}
+      <form className="mt-12 py-12" onSubmit={handleSubmit(processForm)}>
+        {currentStep === 0 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Faculty Research Details
+            </h2>
 
-            {/* Research Area */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="first-name"
-              >
-                Research Area
-              </label>
-              <input
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <FormField
+                label="VTU Faculty ID"
+                stepsReference="facultyResearchSchema.vtuFacultyId"
                 type="text"
-                id="research-area"
-                name="research-area"
-                pattern="^[A-Za-z][A-Za-z ]*$"
-                required
-                title="No numbers or special characters allowed."
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Research Area"
+                register={register}
+                errors={errors}
               />
-            </div>
 
-            {/* Research Supervisor ID */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="first-name"
-              >
-                Research Supervisor ID
-              </label>
-              <input
+              <FormField
+                label="AICTE Faculty ID"
+                stepsReference="facultyResearchSchema.aicteFacultyId"
                 type="text"
-                id="research-supervisor-id"
-                name="research-supervisor-id"
-                pattern="[0-9]{11}"
-                required
-                title="12 digit number"
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Research Supervisor ID"
+                register={register}
+                errors={errors}
               />
-            </div>
 
-            {/* Research Scholars */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="first-name"
-              >
-                Research Scholars
-              </label>
-              <input
+              <FormField
+                label="ORC ID"
+                stepsReference="facultyResearchSchema.orcId"
                 type="text"
-                id="research-scholars"
-                name="research-scholars"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Research Scholars"
+                register={register}
+                errors={errors}
               />
-            </div>
-          </div>
-        </div>
 
-        <div className="p-6 max-w-4xl mx-auto bg-white border-2 shadow-md rounded-md my-10">
-          <div className="grid grid-cols-3 gap-6">
-            {/* Books Published */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="designation"
-              >
-                Books Published
-              </label>
-              <input
+              <FormField
+                label="Scopus ID"
+                stepsReference="facultyResearchSchema.scopusId"
                 type="text"
-                id="books-published"
-                name="books-published"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Books Published"
+                register={register}
+                errors={errors}
               />
-            </div>
 
-            {/* Book Chapters Published */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="designation"
-              >
-                Book Chapters Published
-              </label>
-              <input
+              <FormField
+                label="Publons ID"
+                stepsReference="facultyResearchSchema.publonsAndWebOfScienceId"
                 type="text"
-                id="book-chapters-published"
-                name="book-chapters-published"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Book Chapters Published"
+                register={register}
+                errors={errors}
               />
             </div>
+          </motion.div>
+        )}
 
-            {/* Journal Publications */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="designation"
-              >
-                Journal Publications
-              </label>
-              <input
-                type="text"
-                id="journal-publications"
-                name="journal-publications"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Journal Publications"
-              />
-            </div>
+        {currentStep === 1 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              National Journal Details
+            </h2>
 
-            {/* H-Index */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="designation"
+            {nationalJournal.map((field, index) => (
+              <div
+                key={field.id}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2"
               >
-                H-Index
-              </label>
-              <input
-                type="text"
-                id="h-index"
-                name="h-index"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="H-Index"
-              />
-            </div>
+                <FormField
+                  label="Sl.No"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].slNo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
 
-            {/* I10 Index */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="designation"
-              >
-                110 Index
-              </label>
-              <input
-                type="text"
-                id="i10-index"
-                name="i10-index"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="i10 Index"
-              />
-            </div>
-          </div>
-        </div>
+                <FormField
+                  label="Title Of Research Paper"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].titleOfResearchPaper`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
 
-        <div className="p-6 max-w-4xl mx-auto bg-white border-2 shadow-md rounded-md my-10">
-          <div className="grid grid-cols-3 gap-6">
-            {/* Google Scholar ID */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="designation"
-              >
-                Google Scholar ID
-              </label>
-              <input
-                type="text"
-                id="google-scholar-id"
-                name="google-scholar-id"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Google Scholar ID"
-              />
-            </div>
+                <FormField
+                  label="Name Of Journal"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].nameOfJournal`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
 
-            {/* Total Citations */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="designation"
-              >
-                Total Citations
-              </label>
-              <input
-                type="number"
-                id="total-citations"
-                name="total-citations"
-                required
-                min={0}
-                max={100000}
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Total Citations"
-              />
-            </div>
+                <FormField
+                  label="Volume"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].volume`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
 
-            {/* Publon ID */}
-            <div className="col-span-3">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="designation"
+                <FormField
+                  label="issueNo"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].issueNo`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Year Of Publication"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].yearOfPublication`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Page No From"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].pageNoFrom`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Page No To"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].pageNoTo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 01"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].author01`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 02"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].author02`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 03"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].author03`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 04"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].author04`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div>
+                  <label
+                    htmlFor="publishedUnder"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Published Under
+                  </label>
+                  <select
+                    id="publishedUnder"
+                    {...register(
+                      `nationalJournalDetailsSchema.${index}.publishedUnder`
+                    )}
+                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option value="Web of Science">Web of Science</option>
+                    <option value="Scopus">Scopus</option>
+                    <option value="Q1">Q1</option>
+                    <option value="Q2">Q2</option>
+                    <option value="Q3">Q3</option>
+                  </select>
+                  {errors.nationalJournalDetailsSchema?.[index]
+                    ?.publishedUnder && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {
+                        errors.nationalJournalDetailsSchema[index]
+                          .publishedUnder.message
+                      }
+                    </p>
+                  )}
+                </div>
+
+                <FormField
+                  label="Impact Factor"
+                  stepsReference={`nationalJournalDetailsSchema[${index}].impactFactor`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeNationalJournal(index)}
+                    className="text-red-500 text-sm"
+                  >
+                    Remove Button
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() =>
+                appendNationalJournal({
+                  slNo: "",
+                  titleOfResearchPaper: "",
+                  nameOfJournal: "",
+                  volume: "",
+                  issueNo: "",
+                  yearOfPublication: "",
+                  pageNoFrom: "",
+                  pageNoTo: "",
+                  author01: "",
+                  author02: "",
+                  author03: "",
+                  author04: "",
+                  publishedUnder: "Web of Science",
+                  impactFactor: "",
+                })
+              }
+              className="text-blue-500 text-sm"
+            >
+              + Add a National Journal Publication
+            </button>
+
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              International Journal Details
+            </h2>
+
+            {internationalJournal.map((field, index) => (
+              <div
+                key={field.id}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2"
               >
-                Publon ID
-              </label>
-              <input
-                type="text"
-                id="publon-id"
-                name="publon-id"
-                required
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Publon ID"
-              />
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-row my-10 justify-center gap-2">
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Cancel
-          </button>
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Submit
-          </button>
-        </div>
+                <FormField
+                  label="Sl.No"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].slNo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Title Of Research Paper"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].titleOfResearchPaper`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Name Of Journal"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].nameOfJournal`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Volume"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].volume`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Issue No"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].issueNo`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Year Of Publication"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].yearOfPublication`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Page No From"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].pageNoFrom`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Page No To"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].pageNoTo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 01"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].author01`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 02"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].author02`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 03"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].author03`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 04"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].author04`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div>
+                  <label
+                    htmlFor="publishedUnder"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Published Under
+                  </label>
+                  <select
+                    id="publishedUnder"
+                    {...register(
+                      `internationalJournalDetailsSchema.${index}.publishedUnder`
+                    )}
+                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option value="Web of Science">Web of Science</option>
+                    <option value="Scopus">Scopus</option>
+                    <option value="Q1">Q1</option>
+                    <option value="Q2">Q2</option>
+                    <option value="Q3">Q3</option>
+                    <option value="SCI">SCI</option>
+                  </select>
+                  {errors.internationalJournalDetailsSchema?.[index]
+                    ?.publishedUnder && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {
+                        errors.internationalJournalDetailsSchema[index]
+                          .publishedUnder.message
+                      }
+                    </p>
+                  )}
+                </div>
+
+                <FormField
+                  label="Impact Factor"
+                  stepsReference={`internationalJournalDetailsSchema[${index}].impactFactor`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeInternationalJournal(index)}
+                    className="text-red-500 text-sm"
+                  >
+                    Remove Button
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                appendInternationalJournal({
+                  slNo: "",
+                  titleOfResearchPaper: "",
+                  nameOfJournal: "",
+                  volume: "",
+                  issueNo: "",
+                  yearOfPublication: "",
+                  pageNoFrom: "",
+                  pageNoTo: "",
+                  author01: "",
+                  author02: "",
+                  author03: "",
+                  author04: "",
+                  publishedUnder: "Web of Science",
+                  impactFactor: "",
+                })
+              }
+              className="text-blue-500 text-sm"
+            >
+              + Add an International Journal Publication
+            </button>
+          </motion.div>
+        )}
+
+        {currentStep === 2 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              National Conference Details
+            </h2>
+
+            {nationalConference.map((field, index) => (
+              <div
+                key={field.id}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2"
+              >
+                <FormField
+                  label="Sl.No"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].slNo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Title Of Research Paper"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].titleOfResearchPaper`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Name Of Journal"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].nameOfJournal`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Volume"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].volume`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Issue No"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].issueNo`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Year Of Publication"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].yearOfPublication`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Page No From"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].pageNoFrom`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Page No To"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].pageNoTo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 01"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].author01`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 02"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].author02`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 03"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].author03`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 04"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].author04`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div>
+                  <label
+                    htmlFor="publishedUnder"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Published Under
+                  </label>
+                  <select
+                    id="publishedUnder"
+                    {...register(
+                      `nationalConferenceDetailsSchema.${index}.publishedUnder`
+                    )}
+                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option value="Web of Science">Web of Science</option>
+                    <option value="Scopus">Scopus</option>
+                    <option value="Q1">Q1</option>
+                    <option value="Q2">Q2</option>
+                    <option value="Q3">Q3</option>
+                  </select>
+                  {errors.nationalConferenceDetailsSchema?.[index]
+                    ?.publishedUnder && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {
+                        errors.nationalConferenceDetailsSchema[index]
+                          .publishedUnder.message
+                      }
+                    </p>
+                  )}
+                </div>
+
+                <FormField
+                  label="Impact Factor"
+                  stepsReference={`nationalConferenceDetailsSchema[${index}].impactFactor`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeNationalConference(index)}
+                    className="text-red-500 text-sm"
+                  >
+                    Remove Button
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() =>
+                appendNationalConference({
+                  slNo: "",
+                  titleOfResearchPaper: "",
+                  nameOfJournal: "",
+                  volume: "",
+                  issueNo: "",
+                  yearOfPublication: "",
+                  pageNoFrom: "",
+                  pageNoTo: "",
+                  author01: "",
+                  author02: "",
+                  author03: "",
+                  author04: "",
+                  publishedUnder: "Web of Science",
+                  impactFactor: "",
+                })
+              }
+              className="text-blue-500 text-sm"
+            >
+              + Add a National Conference Publication
+            </button>
+
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              International Conference Details
+            </h2>
+
+            {internationalConference.map((field, index) => (
+              <div
+                key={field.id}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2"
+              >
+                <FormField
+                  label="Sl.No"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].slNo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Title Of Research Paper"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].titleOfResearchPaper`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Name Of Journal"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].nameOfJournal`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Volume"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].volume`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Issue No"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].issueNo`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Year Of Publication"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].yearOfPublication`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Page No From"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].pageNoFrom`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Page No To"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].pageNoTo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 01"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].author01`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 02"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].author02`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 03"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].author03`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 04"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].author04`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div>
+                  <label
+                    htmlFor="publishedUnder"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Published Under
+                  </label>
+                  <select
+                    id="publishedUnder"
+                    {...register(
+                      `internationalConferenceDetailsSchema.${index}.publishedUnder`
+                    )}
+                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option value="Web of Science">Web of Science</option>
+                    <option value="Scopus">Scopus</option>
+                    <option value="Q1">Q1</option>
+                    <option value="Q2">Q2</option>
+                    <option value="Q3">Q3</option>
+                    <option value="SCI">SCI</option>
+                  </select>
+                  {errors.internationalConferenceDetailsSchema?.[index]
+                    ?.publishedUnder && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {
+                        errors.internationalConferenceDetailsSchema[index]
+                          .publishedUnder.message
+                      }
+                    </p>
+                  )}
+                </div>
+
+                <FormField
+                  label="Impact Factor"
+                  stepsReference={`internationalConferenceDetailsSchema[${index}].impactFactor`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeInternationalConference(index)}
+                    className="text-red-500 text-sm"
+                  >
+                    Remove Button
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                appendInternationalConference({
+                  slNo: "",
+                  titleOfResearchPaper: "",
+                  nameOfJournal: "",
+                  volume: "",
+                  issueNo: "",
+                  yearOfPublication: "",
+                  pageNoFrom: "",
+                  pageNoTo: "",
+                  author01: "",
+                  author02: "",
+                  author03: "",
+                  author04: "",
+                  publishedUnder: "Web of Science",
+                  impactFactor: "",
+                })
+              }
+              className="text-blue-500 text-sm"
+            >
+              + Add an International Conference Publication
+            </button>
+          </motion.div>
+        )}
+
+        {currentStep === 3 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Research Grants
+            </h2>
+            {researchGrants.map((field, index) => (
+              <div
+                key={field.id}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2"
+              >
+                <FormField
+                  label="Sl.No"
+                  stepsReference={`researchGrantsSchema[${index}].slNo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Title Of Project"
+                  stepsReference={`researchGrantsSchema[${index}].titleOfProject`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Time Period Of Project (in years)"
+                  stepsReference={`researchGrantsSchema[${index}].timePeriodOfProject`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Sanctioned Date"
+                  stepsReference={`researchGrantsSchema[${index}].sanctionedDate`}
+                  type="date"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Amount Sanctioned"
+                  stepsReference={`researchGrantsSchema[${index}].sanctionedAmount`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Funded Agency"
+                  stepsReference={`researchGrantsSchema[${index}].fundedBy`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+                <FormField
+                  label="Designation of Principal Investigator"
+                  stepsReference={`researchGrantsSchema[${index}].principalInvestigatorDesignation`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+                <FormField
+                  label="Institute of Principal Investigator"
+                  stepsReference={`researchGrantsSchema[${index}].principalInvestigatorInstitute`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+                <FormField
+                  label="Designation of Co-Principal Investigator"
+                  stepsReference={`researchGrantsSchema[${index}].coPrincipalInvestigatorDesignation`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+                <FormField
+                  label="Institute of Co-Principal Investigator"
+                  stepsReference={`researchGrantsSchema[${index}].coPrincipalInvestigatorInstitute`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div>
+                  <label
+                    htmlFor="publishedUnder"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Any Phd Awarded
+                  </label>
+                  <select
+                    id="publishedUnder"
+                    {...register(`researchGrantsSchema.${index}.anyPhdAwarded`)}
+                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                  {errors.researchGrantsSchema?.[index]?.anyPhdAwarded && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.researchGrantsSchema[index].anyPhdAwarded.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="publishedUnder"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Status of Project
+                  </label>
+                  <select
+                    id="publishedUnder"
+                    {...register(`researchGrantsSchema.${index}.status`)}
+                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                  {errors.researchGrantsSchema?.[index]?.status && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.researchGrantsSchema[index].status.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeResearchGrants(index)}
+                    className="text-red-500 text-sm"
+                  >
+                    Remove Button
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                appendResearchGrants({
+                  slNo: "",
+                  titleOfProject: "",
+                  timePeriodOfProject: 1,
+                  sanctionedDate: "",
+                  sanctionedAmount: 0,
+                  fundedBy: "",
+                  principalInvestigatorDesignation: "",
+                  principalInvestigatorInstitute: "",
+                  coPrincipalInvestigatorDesignation: "",
+                  coPrincipalInvestigatorInstitute: "",
+                  anyPhdAwarded: "Yes",
+                  status: "Ongoing",
+                })
+              }
+              className="text-blue-500 text-sm"
+            >
+              + Add a Research Grant
+            </button>
+
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Consultancy
+            </h2>
+            {consultancy.map((field, index) => (
+              <div
+                key={field.id}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2"
+              >
+                <FormField
+                  label="Sl.No"
+                  stepsReference={`consultancySchema[${index}].slNo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Time Period Of Project (in years)"
+                  stepsReference={`consultancySchema[${index}].timePeriodOfProject`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Sanctioned Date"
+                  stepsReference={`consultancySchema[${index}].sanctionedDate`}
+                  type="date"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Amount Sanctioned"
+                  stepsReference={`consultancySchema[${index}].sanctionedAmount`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Funded Agency"
+                  stepsReference={`consultancySchema[${index}].fundedBy`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+                <FormField
+                  label="Designation of Principal Investigator"
+                  stepsReference={`consultancySchema[${index}].principalInvestigatorDesignation`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+                <FormField
+                  label="Institute of Principal Investigator"
+                  stepsReference={`consultancySchema[${index}].principalInvestigatorInstitute`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+                <FormField
+                  label="Designation of Co-Principal Investigator"
+                  stepsReference={`consultancySchema[${index}].coPrincipalInvestigatorDesignation`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+                <FormField
+                  label="Institute of Co-Principal Investigator"
+                  stepsReference={`consultancySchema[${index}].coPrincipalInvestigatorInstitute`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div>
+                  <label
+                    htmlFor="publishedUnder"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Status of Project
+                  </label>
+                  <select
+                    id="publishedUnder"
+                    {...register(`consultancySchema.${index}.status`)}
+                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                  {errors.consultancySchema?.[index]?.status && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {errors.consultancySchema[index].status.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeConsultancy(index)}
+                    className="text-red-500 text-sm"
+                  >
+                    Remove Button
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                appendConsultancy({
+                  slNo: "",
+                  timePeriodOfProject: 1,
+                  sanctionedDate: "",
+                  sanctionedAmount: 0,
+                  fundedBy: "",
+                  principalInvestigatorDesignation: "",
+                  principalInvestigatorInstitute: "",
+                  coPrincipalInvestigatorDesignation: "",
+                  coPrincipalInvestigatorInstitute: "",
+                  status: "Ongoing",
+                })
+              }
+              className="text-blue-500 text-sm"
+            >
+              + Add a Consultancy
+            </button>
+          </motion.div>
+        )}
+
+        {currentStep === 4 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Patents
+            </h2>
+
+            {patents.map((field, index) => (
+              <div
+                key={field.id}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2"
+              >
+                <FormField
+                  label="Sl.No"
+                  stepsReference={`patentsSchema[${index}].slNo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Title Of Research Patent"
+                  stepsReference={`patentsSchema[${index}].titleOfResearchPatent`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Area of Research"
+                  stepsReference={`patentsSchema[${index}].areaOfResearch`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Patent Period"
+                  stepsReference={`patentsSchema[${index}].patentPeriod`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Patent Granted Year"
+                  stepsReference={`patentsSchema[${index}].patentGrantedYear`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 1"
+                  stepsReference={`patentsSchema[${index}].author1`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 2"
+                  stepsReference={`patentsSchema[${index}].author2`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 3"
+                  stepsReference={`patentsSchema[${index}].author3`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Author 4"
+                  stepsReference={`patentsSchema[${index}].author4`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removePatents(index)}
+                    className="text-red-500 text-sm"
+                  >
+                    Remove Patent
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() =>
+                appendPatents({
+                  sNo: "",
+                  awardRecieved: "",
+                })
+              }
+              className="text-blue-500 text-sm"
+            >
+              + Add Patent
+            </button>
+          </motion.div>
+        )}
+
+        {currentStep === 5 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Research Scholar
+            </h2>
+
+            {researchScholar.map((field, index) => (
+              <div
+                key={field.id}
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2"
+              >
+                <FormField
+                  label="Sl.No"
+                  stepsReference={`researchScholarDetailsSchema[${index}].slNo`}
+                  type="number"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Name Of Research Scholar"
+                  stepsReference={`researchScholarDetailsSchema[${index}].nameOfResearchScholar`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="University Seat Number"
+                  stepsReference={`researchScholarDetailsSchema[${index}].universitySeatNumber`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Area Of Research"
+                  stepsReference={`researchScholarDetailsSchema[${index}].areaOfResearch`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Date Of Registration"
+                  stepsReference={`researchScholarDetailsSchema[${index}].dateOfRegistration`}
+                  type="date"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="University of Registration"
+                  stepsReference={`researchScholarDetailsSchema[${index}].universityOfRegistration`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Designation of Supervisor"
+                  stepsReference={`researchScholarDetailsSchema[${index}].designationOfResearcher`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <FormField
+                  label="Name of Institute"
+                  stepsReference={`researchScholarDetailsSchema[${index}].nameOfInstitute`}
+                  type="text"
+                  register={register}
+                  errors={errors}
+                />
+
+                <div>
+                  <label
+                    htmlFor="publishedUnder"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Progress of Research Work
+                  </label>
+                  <select
+                    id="publishedUnder"
+                    {...register(
+                      `researchScholarDetailsSchema.${index}.progressOfResearchWork`
+                    )}
+                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+                  >
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                  {errors.researchScholarDetailsSchema?.[index]
+                    ?.progressOfResearchWork && (
+                    <p className="mt-2 text-sm text-red-600">
+                      {
+                        errors.researchScholarDetailsSchema[index]
+                          .progressOfResearchWork.message
+                      }
+                    </p>
+                  )}
+                </div>
+
+                <div className="col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeResearchScholar(index)}
+                    className="text-red-500 text-sm"
+                  >
+                    Remove Research Scholar
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() =>
+                appendResearchScholar({
+                  slNo: "",
+                  nameOfResearchScholar: "",
+                  universitySeatNumber: "",
+                  areaOfResearch: "",
+                  dateOfRegistration: "",
+                  universityOfRegistration: "",
+                  designationOfResearcher: "",
+                  nameOfInstitute: "",
+                  progressOfResearchWork: "Ongoing",
+                })
+              }
+              className="text-blue-500 text-sm"
+            >
+              + Add Research Scholar
+            </button>
+          </motion.div>
+        )}
+
+        {currentStep === 6 && (
+          <motion.div
+            initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Complete
+            </h2>
+          </motion.div>
+        )}
       </form>
-    </div>
-  );
-};
 
-export default page;
+      <FormNavigation
+        prevButtonFunction={prevButtonFunction}
+        steps={steps}
+        currentStep={currentStep}
+        nextButtonFunction={nextButtonFunction}
+      />
+    </section>
+  );
+}
