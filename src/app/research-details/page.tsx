@@ -346,7 +346,7 @@ export default function Form() {
                       onClick={() => removeNationalJournal(index)}
                       className="text-red-500 text-sm"
                     >
-                      Remove Button
+                      Remove National Journal
                     </button>
                   </div>
                 </div>
@@ -502,7 +502,7 @@ export default function Form() {
                       onClick={() => removeInternationalJournal(index)}
                       className="text-red-500 text-sm"
                     >
-                      Remove Button
+                      Remove International Journal
                     </button>
                   </div>
                 </div>
@@ -664,7 +664,7 @@ export default function Form() {
                       onClick={() => removeNationalConference(index)}
                       className="text-red-500 text-sm"
                     >
-                      Remove Button
+                      Remove National Conference
                     </button>
                   </div>
                 </div>
@@ -820,7 +820,7 @@ export default function Form() {
                       onClick={() => removeInternationalConference(index)}
                       className="text-red-500 text-sm"
                     >
-                      Remove Button
+                      Remove International Conference
                     </button>
                   </div>
                 </div>
@@ -977,7 +977,7 @@ export default function Form() {
                       onClick={() => removeResearchGrants(index)}
                       className="text-red-500 text-sm"
                     >
-                      Remove Button
+                      Remove Research Grants
                     </button>
                   </div>
                 </div>
@@ -1091,7 +1091,7 @@ export default function Form() {
                       onClick={() => removeConsultancy(index)}
                       className="text-red-500 text-sm"
                     >
-                      Remove Button
+                      Remove Consultancy
                     </button>
                   </div>
                 </div>
