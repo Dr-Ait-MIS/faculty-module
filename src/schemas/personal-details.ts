@@ -23,8 +23,10 @@ export const personalSchema = z.object({
   //   }), //first three letters then 2 digits
   qualification: z.string().min(1, { message: "Qualification is required" }),
   //photo: z.string({ message: "Photo is required" }),
-  title: z.string().min(1, { message: "Qualification is required" }),
-  prefix: z.enum(["Mr", "Mrs", "Ms", "Dr", "Prof"]),
+  title: z.string().min(1, { message: "Title is required" }),
+  prefix: z.enum(["Mr", "Mrs", "Ms", "Dr", "Prof"], {
+    message: "Please select a prefix",
+  }),
   firstName: z
     .string()
     .min(1, "First name is required")

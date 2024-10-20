@@ -4,15 +4,15 @@ import { useFormContext } from "@/hooks/FormProvider";
 interface FormFieldProps {
   label: string;
   stepsReference: string;
-  type: string;
   disabled?: boolean;
+  options: string[];
   className?: string;
 }
 
-const FormField: React.FC<FormFieldProps> = ({
+const FormFieldSelect: React.FC<FormFieldProps> = ({
   label,
   stepsReference,
-  type,
+  options,
   className = "",
   disabled = false,
 }) => {
@@ -26,13 +26,17 @@ const FormField: React.FC<FormFieldProps> = ({
       >
         {label}
       </label>
-      <input
-        type={type}
+      <select
         id={stepsReference}
-        disabled={disabled}
         {...register(stepsReference)}
-        className="mt-1 block w-full p-1 py-1.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-      />
+        className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
       {errorMessage && (
         <p className="mt-2 text-sm text-red-600">{errorMessage.message}</p>
       )}
@@ -40,4 +44,4 @@ const FormField: React.FC<FormFieldProps> = ({
   );
 };
 
-export default FormField;
+export default FormFieldSelect;

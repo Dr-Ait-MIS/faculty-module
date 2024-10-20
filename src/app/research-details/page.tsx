@@ -13,6 +13,7 @@ import { Step } from "@/types/form";
 import FormField from "@/components/FormField";
 import FormNavigation from "@/components/FormNavigation";
 import { FormProvider } from "@/hooks/FormProvider";
+import FormFieldSelect from "@/components/FormFieldSelect";
 
 type Inputs = z.infer<typeof facultyResearchDetailsSchema>;
 
@@ -304,42 +305,18 @@ export default function Form() {
                     type="text"
                   />
 
-                  <div>
-                    <label
-                      htmlFor="publishedUnder"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Published Under
-                    </label>
-                    <select
-                      id="publishedUnder"
-                      {...register(
-                        `nationalJournalDetailsSchema.${index}.publishedUnder`
-                      )}
-                      className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                    >
-                      <option value="Web of Science">Web of Science</option>
-                      <option value="Scopus">Scopus</option>
-                      <option value="Q1">Q1</option>
-                      <option value="Q2">Q2</option>
-                      <option value="Q3">Q3</option>
-                    </select>
-                    {errors.nationalJournalDetailsSchema?.[index]
-                      ?.publishedUnder && (
-                      <p className="mt-2 text-sm text-red-600">
-                        {
-                          errors.nationalJournalDetailsSchema[index]
-                            .publishedUnder.message
-                        }
-                      </p>
-                    )}
-                  </div>
+                  <FormFieldSelect
+                    label="Published Under"
+                    stepsReference={`nationalJournalDetailsSchema[${index}].publishedUnder`}
+                    options={["Web of Science", "Scopus", "Q1", "Q2", "Q3"]}
+                  />
 
                   <FormField
                     label="Impact Factor"
                     stepsReference={`nationalJournalDetailsSchema[${index}].impactFactor`}
                     type="number"
                   />
+
                   <div className="col-span-2 flex justify-end">
                     <button
                       type="button"
@@ -458,37 +435,18 @@ export default function Form() {
                     type="text"
                   />
 
-                  <div>
-                    <label
-                      htmlFor="publishedUnder"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Published Under
-                    </label>
-                    <select
-                      id="publishedUnder"
-                      {...register(
-                        `internationalJournalDetailsSchema.${index}.publishedUnder`
-                      )}
-                      className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                    >
-                      <option value="Web of Science">Web of Science</option>
-                      <option value="Scopus">Scopus</option>
-                      <option value="Q1">Q1</option>
-                      <option value="Q2">Q2</option>
-                      <option value="Q3">Q3</option>
-                      <option value="SCI">SCI</option>
-                    </select>
-                    {errors.internationalJournalDetailsSchema?.[index]
-                      ?.publishedUnder && (
-                      <p className="mt-2 text-sm text-red-600">
-                        {
-                          errors.internationalJournalDetailsSchema[index]
-                            .publishedUnder.message
-                        }
-                      </p>
-                    )}
-                  </div>
+                  <FormFieldSelect
+                    label="Published Under"
+                    stepsReference={`internationalJournalDetailsSchema[${index}].publishedUnder`}
+                    options={[
+                      "Web of Science",
+                      "Scopus",
+                      "Q1",
+                      "Q2",
+                      "Q3",
+                      "SCI",
+                    ]}
+                  />
 
                   <FormField
                     label="Impact Factor"
@@ -621,36 +579,11 @@ export default function Form() {
                     type="text"
                   />
 
-                  <div>
-                    <label
-                      htmlFor="publishedUnder"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Published Under
-                    </label>
-                    <select
-                      id="publishedUnder"
-                      {...register(
-                        `nationalConferenceDetailsSchema.${index}.publishedUnder`
-                      )}
-                      className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                    >
-                      <option value="Web of Science">Web of Science</option>
-                      <option value="Scopus">Scopus</option>
-                      <option value="Q1">Q1</option>
-                      <option value="Q2">Q2</option>
-                      <option value="Q3">Q3</option>
-                    </select>
-                    {errors.nationalConferenceDetailsSchema?.[index]
-                      ?.publishedUnder && (
-                      <p className="mt-2 text-sm text-red-600">
-                        {
-                          errors.nationalConferenceDetailsSchema[index]
-                            .publishedUnder.message
-                        }
-                      </p>
-                    )}
-                  </div>
+                  <FormFieldSelect
+                    label="Published Under"
+                    stepsReference={`nationalConferenceDetailsSchema[${index}].publishedUnder`}
+                    options={["Web of Science", "Scopus", "Q1", "Q2", "Q3"]}
+                  />
 
                   <FormField
                     label="Impact Factor"
@@ -776,37 +709,11 @@ export default function Form() {
                     type="text"
                   />
 
-                  <div>
-                    <label
-                      htmlFor="publishedUnder"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Published Under
-                    </label>
-                    <select
-                      id="publishedUnder"
-                      {...register(
-                        `internationalConferenceDetailsSchema.${index}.publishedUnder`
-                      )}
-                      className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                    >
-                      <option value="Web of Science">Web of Science</option>
-                      <option value="Scopus">Scopus</option>
-                      <option value="Q1">Q1</option>
-                      <option value="Q2">Q2</option>
-                      <option value="Q3">Q3</option>
-                      <option value="SCI">SCI</option>
-                    </select>
-                    {errors.internationalConferenceDetailsSchema?.[index]
-                      ?.publishedUnder && (
-                      <p className="mt-2 text-sm text-red-600">
-                        {
-                          errors.internationalConferenceDetailsSchema[index]
-                            .publishedUnder.message
-                        }
-                      </p>
-                    )}
-                  </div>
+                  <FormFieldSelect
+                    label="Published Under"
+                    stepsReference={`internationalConferenceDetailsSchema[${index}].publishedUnder`}
+                    options={["Web of Science", "Scopus", "Q1", "Q2", "Q3"]}
+                  />
 
                   <FormField
                     label="Impact Factor"
@@ -922,54 +829,17 @@ export default function Form() {
                     type="text"
                   />
 
-                  <div>
-                    <label
-                      htmlFor="publishedUnder"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Any Phd Awarded
-                    </label>
-                    <select
-                      id="publishedUnder"
-                      {...register(
-                        `researchGrantsSchema.${index}.anyPhdAwarded`
-                      )}
-                      className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                    >
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                    {errors.researchGrantsSchema?.[index]?.anyPhdAwarded && (
-                      <p className="mt-2 text-sm text-red-600">
-                        {
-                          errors.researchGrantsSchema[index].anyPhdAwarded
-                            .message
-                        }
-                      </p>
-                    )}
-                  </div>
+                  <FormFieldSelect
+                    label="Any Phd Awarded"
+                    stepsReference={`researchGrantsSchema[${index}].anyPhdAwarded`}
+                    options={["Yes", "No"]}
+                  />
 
-                  <div>
-                    <label
-                      htmlFor="publishedUnder"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Status of Project
-                    </label>
-                    <select
-                      id="publishedUnder"
-                      {...register(`researchGrantsSchema.${index}.status`)}
-                      className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                    >
-                      <option value="Ongoing">Ongoing</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                    {errors.researchGrantsSchema?.[index]?.status && (
-                      <p className="mt-2 text-sm text-red-600">
-                        {errors.researchGrantsSchema[index].status.message}
-                      </p>
-                    )}
-                  </div>
+                  <FormFieldSelect
+                    label="Status of Project"
+                    stepsReference={`researchGrantsSchema[${index}].status`}
+                    options={["Ongoing", "Completed"]}
+                  />
 
                   <div className="col-span-2 flex justify-end">
                     <button
@@ -1042,48 +912,36 @@ export default function Form() {
                     stepsReference={`consultancySchema[${index}].fundedBy`}
                     type="text"
                   />
+
                   <FormField
                     label="Designation of Principal Investigator"
                     stepsReference={`consultancySchema[${index}].principalInvestigatorDesignation`}
                     type="text"
                   />
+
                   <FormField
                     label="Institute of Principal Investigator"
                     stepsReference={`consultancySchema[${index}].principalInvestigatorInstitute`}
                     type="text"
                   />
+
                   <FormField
                     label="Designation of Co-Principal Investigator"
                     stepsReference={`consultancySchema[${index}].coPrincipalInvestigatorDesignation`}
                     type="text"
                   />
+
                   <FormField
                     label="Institute of Co-Principal Investigator"
                     stepsReference={`consultancySchema[${index}].coPrincipalInvestigatorInstitute`}
                     type="text"
                   />
 
-                  <div>
-                    <label
-                      htmlFor="publishedUnder"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Status of Project
-                    </label>
-                    <select
-                      id="publishedUnder"
-                      {...register(`consultancySchema.${index}.status`)}
-                      className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                    >
-                      <option value="Ongoing">Ongoing</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                    {errors.consultancySchema?.[index]?.status && (
-                      <p className="mt-2 text-sm text-red-600">
-                        {errors.consultancySchema[index].status.message}
-                      </p>
-                    )}
-                  </div>
+                  <FormFieldSelect
+                    label="Status of Project"
+                    stepsReference={`consultancySchema[${index}].status`}
+                    options={["Ongoing", "Completed"]}
+                  />
 
                   <div className="col-span-2 flex justify-end">
                     <button
@@ -1278,33 +1136,11 @@ export default function Form() {
                     type="text"
                   />
 
-                  <div>
-                    <label
-                      htmlFor="publishedUnder"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Progress of Research Work
-                    </label>
-                    <select
-                      id="publishedUnder"
-                      {...register(
-                        `researchScholarDetailsSchema.${index}.progressOfResearchWork`
-                      )}
-                      className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                    >
-                      <option value="Ongoing">Ongoing</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                    {errors.researchScholarDetailsSchema?.[index]
-                      ?.progressOfResearchWork && (
-                      <p className="mt-2 text-sm text-red-600">
-                        {
-                          errors.researchScholarDetailsSchema[index]
-                            .progressOfResearchWork.message
-                        }
-                      </p>
-                    )}
-                  </div>
+                  <FormFieldSelect
+                    label="Progress of Research Work"
+                    stepsReference={`researchScholarDetailsSchema[${index}].progressOfResearchWork`}
+                    options={["Ongoing", "Completed"]}
+                  />
 
                   <div className="col-span-2 flex justify-end">
                     <button

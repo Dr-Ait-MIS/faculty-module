@@ -127,10 +127,12 @@ export const researchGrantsSchema = z.array(
     slNo: z.string().min(1, { message: "Serial number is required" }),
     titleOfProject: z.string().min(1, { message: "Title is required" }),
     sanctionedDate: z.coerce.date({ message: "Sanctioned date is required" }),
-    timePeriodOfProject: z.number({
+    timePeriodOfProject: z.coerce.number({
       message: "Time period of project is required",
     }),
-    sanctionedAmount: z.number({ message: "Sanctioned amount is required" }),
+    sanctionedAmount: z.coerce.number({
+      message: "Sanctioned amount is required",
+    }),
     fundedBy: z.string().min(1, { message: "Funded by is required" }),
     principalInvestigatorDesignation: z
       .string()
@@ -157,10 +159,12 @@ export const consultancySchema = z.array(
   z.object({
     slNo: z.string().min(1, { message: "Serial number is required" }),
     sanctionedDate: z.coerce.date({ message: "Sanctioned date is required" }),
-    timePeriodOfProject: z.number({
+    timePeriodOfProject: z.coerce.number({
       message: "Time period of project is required",
     }),
-    sanctionedAmount: z.number({ message: "Sanctioned amount is required" }),
+    sanctionedAmount: z.coerce.number({
+      message: "Sanctioned amount is required",
+    }),
     fundedBy: z.string().min(1, { message: "Funded by is required" }),
     principalInvestigatorDesignation: z
       .string()

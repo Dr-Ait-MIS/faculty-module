@@ -12,6 +12,7 @@ import FormNavigation from "@/components/FormNavigation";
 import FormField from "@/components/FormField";
 import { Step } from "@/types/form";
 import { FormProvider } from "@/hooks/FormProvider";
+import FormFieldSelect from "@/components/FormFieldSelect";
 
 type Inputs = z.infer<typeof facultyPersonalDetailsSchema>;
 
@@ -215,7 +216,7 @@ export default function Form() {
   };
 
   return (
-    <section className=" flex flex-col justify-between p-24">
+    <section className="flex flex-col justify-between p-24">
       <FormProgress steps={steps} currentStep={currentStep} />
 
       <FormProvider register={register} errors={errors}>
@@ -244,44 +245,19 @@ export default function Form() {
                 />
 
                 <div className="grid grid-cols-1 sm:grid-cols-6 gap-6">
-                  <div className="col-span-1">
-                    <label
-                      htmlFor="prefix"
-                      className="block  text-sm font-medium text-gray-700"
-                    >
-                      Prefix
-                    </label>
-                    <select
-                      id="prefix"
-                      {...register("personalSchema.prefix")}
-                      className="mt-1 w-full block p-1 py-2 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                    >
-                      <option>Mr</option>
-                      <option>Mrs</option>
-                      <option>Ms</option>
-                      <option>Dr</option>
-                    </select>
-                  </div>
+                  <FormFieldSelect
+                    className="col-span-1"
+                    label="Prefix"
+                    stepsReference="personalSchema.prefix"
+                    options={["Mr", "Mrs", "Ms", "Dr"]}
+                  />
 
-                  <div className="col-span-5">
-                    <label
-                      htmlFor="firstName"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      {...register("personalSchema.firstName")}
-                      className="mt-1 block w-full p-1 py-1.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                    />
-                    {errors.personalSchema?.firstName && (
-                      <p className="mt-2 text-sm text-red-600">
-                        {errors.personalSchema.firstName.message}
-                      </p>
-                    )}
-                  </div>
+                  <FormField
+                    className="col-span-5"
+                    label="First Name"
+                    stepsReference="personalSchema.firstName"
+                    type="text"
+                  />
                 </div>
 
                 <FormField
@@ -334,28 +310,11 @@ export default function Form() {
 
                 <div></div>
 
-                <div>
-                  <label
-                    htmlFor="gender"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Gender
-                  </label>
-                  <select
-                    id="gender"
-                    {...register("personalSchema.gender")}
-                    className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                  >
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Other</option>
-                  </select>
-                  {errors.personalSchema?.gender && (
-                    <p className="mt-2 text-sm text-red-600">
-                      {errors.personalSchema.gender.message}
-                    </p>
-                  )}
-                </div>
+                <FormFieldSelect
+                  label="Gender"
+                  stepsReference="personalSchema.gender"
+                  options={["Male", "Female", "Other"]}
+                />
 
                 <FormField
                   label="Nationality"
@@ -442,150 +401,79 @@ export default function Form() {
                 Other Details
               </h2>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {/* Religion Dropdown */}
-                <div>
-                  <label
-                    htmlFor="religion"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Religion
-                  </label>
-                  <select
-                    id="religion"
-                    {...register("personalSchema.religion")}
-                    className="mt-1 block w-full p-2 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                  >
-                    <option value="">Select Religion</option>
-                    <option value="Hindu">Hindu</option>
-                    <option value="Muslim">Muslim</option>
-                    <option value="Christian">Christian</option>
-                    <option value="Sikh">Sikh</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  {errors.personalSchema?.religion && (
-                    <p className="mt-2 text-sm text-red-600">
-                      {errors.personalSchema.religion.message}
-                    </p>
-                  )}
-                </div>
+                <FormFieldSelect
+                  label="Religion"
+                  stepsReference="personalSchema.religion"
+                  options={["Hindu", "Muslim", "Christian", "Sikh", "Other"]}
+                />
 
-                {/* Caste Dropdown */}
-                <div>
-                  <label
-                    htmlFor="caste"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Caste
-                  </label>
-                  <select
-                    id="caste"
-                    {...register("personalSchema.caste")}
-                    className="mt-1 block w-full p-2 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                  >
-                    <option value="">Select Caste</option>
-                    <option value="Brahmins">Brahmins</option>
-                    <option value="Thakur">Thakur</option>
-                    <option value="Vaishya">Vaishya</option>
-                    <option value="Tyagi">Tyagi</option>
-                    <option value="Bhumihar">Bhumihar</option>
-                    <option value="Muslims">Muslims</option>
-                    <option value="Christians">Christians</option>
-                    <option value="Rajput">Rajput</option>
-                    <option value="Kayastha">Kayastha</option>
-                    <option value="Pathans">Pathans</option>
-                    <option value="Muslim Mughals">Muslim Mughals</option>
-                    <option value="Muslim Shaikh">Muslim Shaikh</option>
-                    <option value="Muslim Sayyad">Muslim Sayyad</option>
-                    <option value="Jat Sikh">Jat Sikh</option>
-                    <option value="Bania">Bania</option>
-                    <option value="Punjabi Khatri">Punjabi Khatri</option>
-                    <option value="Punjabi Arora">Punjabi Arora</option>
-                    <option value="Punjabi Sood">Punjabi Sood</option>
-                    <option value="Baidya">Baidya</option>
-                    <option value="Patidar">Patidar</option>
-                    <option value="Patel">Patel</option>
-                    <option value="Kshatriya">Kshatriya</option>
-                    <option value="Reddy">Reddy</option>
-                    <option value="Kamma">Kamma</option>
-                    <option value="Kapu">Kapu</option>
-                    <option value="Gomati Baniya">Gomati Baniya</option>
-                    <option value="Velamma">Velamma</option>
-                    <option value="Kshatriya Raju">Kshatriya Raju</option>
-                    <option value="Iyengar">Iyengar</option>
-                    <option value="Iyer">Iyer</option>
-                    <option value="Vellalars">Vellalars</option>
-                    <option value="Nair">Nair</option>
-                    <option value="Naidu">Naidu</option>
-                    <option value="Mukkulathor">Mukkulathor</option>
-                    <option value="Sengunthar">Sengunthar</option>
-                    <option value="Parkavakulam">Parkavakulam</option>
-                    <option value="Nagarathar Baniya">Nagarathar Baniya</option>
-                    <option value="Komati">Komati</option>
-                    <option value="Vokkaligas">Vokkaligas</option>
-                    <option value="Lingayats">Lingayats</option>
-                    <option value="Bunts">Bunts</option>
-                  </select>
-                  {errors.personalSchema?.caste && (
-                    <p className="mt-2 text-sm text-red-600">
-                      {errors.personalSchema.caste.message}
-                    </p>
-                  )}
-                </div>
+                <FormFieldSelect
+                  label="Caste"
+                  stepsReference="personalSchema.caste"
+                  options={[
+                    "Brahmins",
+                    "Thakur",
+                    "Vaishya",
+                    "Tyagi",
+                    "Bhumihar",
+                    "Muslims",
+                    "Christians",
+                    "Rajput",
+                    "Kayastha",
+                    "Pathans",
+                    "Muslim Mughals",
+                    "Muslim Shaikh",
+                    "Muslim Sayyad",
+                    "Jat Sikh",
+                    "Bania",
+                    "Punjabi Khatri",
+                    "Punjabi Arora",
+                    "Punjabi Sood",
+                    "Baidya",
+                    "Patidar",
+                    "Patel",
+                    "Kshatriya",
+                    "Reddy",
+                    "Kamma",
+                    "Kapu",
+                    "Gomati Baniya",
+                    "Velamma",
+                    "Kshatriya Raju",
+                    "Iyengar",
+                    "Iyer",
+                    "Vellalars",
+                    "Nair",
+                    "Naidu",
+                    "Mukkulathor",
+                    "Sengunthar",
+                    "Parkavakulam",
+                    "Nagarathar Baniya",
+                    "Komati",
+                    "Vokkaligas",
+                    "Lingayats",
+                    "Bunts",
+                  ]}
+                />
 
-                {/* Category Dropdown */}
-                <div>
-                  <label
-                    htmlFor="category"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Category
-                  </label>
-                  <select
-                    id="category"
-                    {...register("personalSchema.category")}
-                    className="mt-1 block w-full p-2 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                  >
-                    <option value="">Select Category</option>
-                    <option value="General">General</option>
-                    <option value="OBC">OBC</option>
-                    <option value="SC">SC</option>
-                    <option value="ST">ST</option>
-                  </select>
-                  {errors.personalSchema?.category && (
-                    <p className="mt-2 text-sm text-red-600">
-                      {errors.personalSchema.category.message}
-                    </p>
-                  )}
-                </div>
+                <FormFieldSelect
+                  label="Category"
+                  stepsReference="personalSchema.category"
+                  options={["General", "OBC", "SC", "ST"]}
+                />
 
-                {/* Mother Tongue Dropdown */}
-                <div>
-                  <label
-                    htmlFor="motherTongue"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Mother Tongue
-                  </label>
-                  <select
-                    id="motherTongue"
-                    {...register("personalSchema.motherTongue")}
-                    className="mt-1 block w-full p-2 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                  >
-                    <option value="">Select Mother Tongue</option>
-                    <option value="Kannada">Kannada</option>
-                    <option value="Malayalam">Malayalam</option>
-                    <option value="Hindi">Hindi</option>
-                    <option value="English">English</option>
-                    <option value="Tamil">Tamil</option>
-                    <option value="Telugu">Telugu</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  {errors.personalSchema?.motherTongue && (
-                    <p className="mt-2 text-sm text-red-600">
-                      {errors.personalSchema.motherTongue.message}
-                    </p>
-                  )}
-                </div>
+                <FormFieldSelect
+                  label="Mother Tongue"
+                  stepsReference="personalSchema.motherTongue"
+                  options={[
+                    "Kannada",
+                    "Malayalam",
+                    "Hindi",
+                    "English",
+                    "Tamil",
+                    "Telugu",
+                    "Other",
+                  ]}
+                />
 
                 {/* Specially Challenged Checkbox */}
                 <div>
@@ -977,69 +865,23 @@ export default function Form() {
                       key={child.id}
                       className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4"
                     >
-                      {/* Child Name */}
                       <FormField
                         label="Name"
                         stepsReference={`dependentsSchema.children[${index}].name`}
                         type="text"
                       />
 
-                      {/* Child Gender */}
-                      <div>
-                        <label
-                          htmlFor={`children[${index}].gender`}
-                          className="block text-sm font-medium text-gray-700"
-                        >
-                          Gender
-                        </label>
-                        <select
-                          id={`children[${index}].gender`}
-                          {...register(
-                            `dependentsSchema.children.${index}.gender`
-                          )}
-                          className="mt-1 block w-full p-1 py-2.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                        >
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                          <option value="Prefer not to say">
-                            Prefer not to say
-                          </option>
-                        </select>
-                        {errors.dependentsSchema?.children?.[index]?.gender && (
-                          <p className="mt-2 text-sm text-red-600">
-                            {
-                              errors.dependentsSchema.children[index].gender
-                                .message
-                            }
-                          </p>
-                        )}
-                      </div>
+                      <FormFieldSelect
+                        label="Gender"
+                        stepsReference={`dependentsSchema.children[${index}].gender`}
+                        options={["Male", "Gender", "Prefer Not to Say"]}
+                      />
 
-                      {/* Child Date of Birth */}
-                      <div>
-                        <label
-                          htmlFor={`children[${index}].dob`}
-                          className="block text-sm font-medium text-gray-700"
-                        >
-                          Date of Birth
-                        </label>
-                        <input
-                          type="date"
-                          id={`children[${index}].dob`}
-                          {...register(
-                            `dependentsSchema.children.${index}.dob`
-                          )}
-                          className="mt-1 block w-full p-1 py-1.5 rounded-md border bg-gray-50 border-gray-300 shadow-sm"
-                        />
-                        {errors.dependentsSchema?.children?.[index]?.dob && (
-                          <p className="mt-2 text-sm text-red-600">
-                            {
-                              errors.dependentsSchema.children[index].dob
-                                .message
-                            }
-                          </p>
-                        )}
-                      </div>
+                      <FormField
+                        label="Date of Birth"
+                        stepsReference={`dependentsSchema.children[${index}].dob`}
+                        type="date"
+                      />
 
                       {/* Remove Child Button */}
                       <div className="col-span-3 flex justify-end">
