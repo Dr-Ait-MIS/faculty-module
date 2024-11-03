@@ -13,6 +13,7 @@ import FormField from "@/components/FormField";
 import { Step } from "@/types/form";
 import { FormProvider } from "@/hooks/FormProvider";
 import FormFieldSelect from "@/components/FormFieldSelect";
+import ProfilePhotoInput from "@/components/ProfilePhotoInput";
 
 type Inputs = z.infer<typeof facultyPersonalDetailsSchema>;
 
@@ -232,6 +233,7 @@ export default function Form() {
               </h2>
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <ProfilePhotoInput className="col-span-2" />
                 <FormField
                   label="Qualification"
                   stepsReference="personalSchema.qualification"
